@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reconhecimento Facial CARVO</title>
+<title>Login Facial CARVO</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/dist/face-api.js"></script>
 <style>
@@ -13,12 +13,12 @@
   h1{font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.5px;margin-bottom:4px}
   .sub{font-size:13px;opacity:.55;margin-bottom:24px}
   .tabs{display:flex;gap:8px;margin-bottom:20px;background:rgba(242,239,233,.05);padding:5px;border-radius:12px}
-  .tab{padding:10px 22px;border:none;background:transparent;color:var(--off);font-family:'Manrope',sans-serif;font-weight:700;font-size:14px;border-radius:8px;cursor:pointer;opacity:.55;transition:.2s}
+  .tab{padding:10px 22px;border:none;background:transparent;color:var(--off);font-family:'Manrope';font-weight:700;font-size:14px;border-radius:8px;cursor:pointer;opacity:.55;transition:.2s}
   .tab.ativo{background:var(--green);opacity:1}
-  .palco{position:relative;width:480px;max-width:100%;aspect-ratio:4/3;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000}
+  .palco{position:relative;width:420px;max-width:100%;aspect-ratio:4/3;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000}
   video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   canvas{z-index:2}
-  .painel{width:480px;max-width:100%;margin-top:18px;display:flex;flex-direction:column;gap:12px}
+  .painel{width:420px;max-width:100%;margin-top:18px;display:flex;flex-direction:column;gap:12px}
   .linha{display:flex;gap:10px}
   input{flex:1;padding:13px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(242,239,233,.04);color:var(--off);font-family:'DM Sans';font-size:15px}
   input:focus{outline:none;border-color:var(--green)}
@@ -26,18 +26,15 @@
   button.acao:hover{filter:brightness(1.15)}
   button.acao:disabled{opacity:.35;cursor:not-allowed}
   .status{font-size:13px;text-align:center;min-height:20px;padding:10px;border-radius:10px;background:var(--green-soft);font-weight:500}
-  .resultado{font-family:'Manrope';font-weight:800;font-size:28px;text-align:center;padding:16px;border-radius:12px;border:1px solid var(--line);min-height:64px;display:flex;flex-direction:column;justify-content:center}
-  .conf{font-family:'DM Sans';font-weight:400;font-size:13px;opacity:.6;margin-top:4px}
-  .ok{color:#4ade80}.no{color:#f87171}
   .grupo{display:none}.grupo.ativo{display:flex;flex-direction:column;gap:12px}
 </style>
 </head>
 <body>
-  <h1>Reconhecimento Facial CARVO</h1>
-  <div class="sub">Processamento no navegador. Backend: Apps Script (API JSON)</div>
+  <h1>Login Facial CARVO</h1>
+  <div class="sub">Olhe para a camera para entrar</div>
 
   <div class="tabs">
-    <button class="tab ativo" id="tabRec" onclick="trocar('rec')">Reconhecer</button>
+    <button class="tab ativo" id="tabLogin" onclick="trocar('login')">Entrar</button>
     <button class="tab" id="tabCad" onclick="trocar('cad')">Cadastrar</button>
   </div>
 
@@ -48,41 +45,32 @@
 
   <div class="painel">
     <div class="status" id="status">Carregando modelos de IA...</div>
-    <div class="grupo ativo" id="grupoRec">
-      <div class="resultado" id="resultado">Aguardando...</div>
-      <button class="acao" id="btnRec" disabled onclick="alternarReconhecimento()">Iniciar reconhecimento</button>
+    <div class="grupo ativo" id="grupoLogin">
+      <button class="acao" id="btnLogin" disabled onclick="alternarScan()">Procurar meu rosto</button>
     </div>
     <div class="grupo" id="grupoCad">
       <div class="linha">
         <input id="nome" placeholder="Nome da pessoa" />
         <button class="acao" id="btnCad" disabled onclick="cadastrar()">Capturar rosto</button>
       </div>
-      <div style="font-size:12px;opacity:.5;line-height:1.5">Cadastre a mesma pessoa 3 a 4 vezes, com angulos e luz diferentes. Mais amostras = menos erro.</div>
+      <div style="font-size:12px;opacity:.5;line-height:1.5">Cadastre cada pessoa 3 a 4 vezes, com angulos e luz diferentes.</div>
     </div>
   </div>
 
 <script>
 /* ====== CONFIG ====== */
-var URL_API   = '1aUw0JyHxUY5Umrvfv0rSA1v4qbz32JxdVw_5f8xcd04'; // ex: https://script.google.com/macros/s/XXXX/exec
+var URL_API   = 'https://script.google.com/macros/s/AKfycbyblXQW3FWpG05-th-8WiaoNJNu6wag5ljbamASTr449elzH1x9Xg_vxySyOlrNOHZo/exec';
 var MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/model';
-var LIMIAR = 0.5;       // distancia maxima p/ match (menor = mais rigido)
-var INTERVALO_MS = 700;
+var LIMIAR = 0.5;
+var INTERVALO_MS = 600;
 
-/* ====== ESTADO ====== */
 var video=document.getElementById('video'), overlay=document.getElementById('overlay'), statusEl=document.getElementById('status');
-var matcher=null, loopAtivo=false, loopId=null, ultimoLog='';
+var scanAtivo=false, scanId=null, entrando=false;
 
-/* ====== CLIENTE DA API (fetch, CORS-safe) ====== */
-function apiGet(action){
-  return fetch(URL_API + '?action=' + encodeURIComponent(action)).then(function(r){ return r.json(); });
-}
+/* ====== API ====== */
 function apiPost(payload){
-  // text/plain evita o preflight OPTIONS que o Apps Script nao responde
-  return fetch(URL_API, {
-    method:'POST',
-    headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  }).then(function(r){ return r.json(); });
+  return fetch(URL_API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) })
+    .then(function(r){ return r.json(); });
 }
 
 /* ====== BOOT ====== */
@@ -94,46 +82,65 @@ function apiPost(payload){
       faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
     ]);
     await iniciarCamera();
-    await carregarRostos();
-    document.getElementById('btnRec').disabled=false;
+    document.getElementById('btnLogin').disabled=false;
     document.getElementById('btnCad').disabled=false;
-    setStatus('Pronto. ' + (matcher ? 'Banco de rostos carregado.' : 'Nenhum rosto cadastrado ainda.'));
+    setStatus('Pronto. Clique em "Procurar meu rosto".');
   }catch(e){ tratarErroInit(e); }
 })();
 
 function tratarErroInit(e){
-  var nome = e && e.name ? e.name : '';
-  if(nome === 'NotAllowedError')      setStatus('Camera bloqueada. Permita o acesso no navegador (cadeado da barra) e recarregue.');
-  else if(nome === 'NotFoundError')   setStatus('Nenhuma camera encontrada no dispositivo.');
-  else if(nome === 'NotReadableError')setStatus('Camera em uso por outro app. Feche e tente de novo.');
-  else if(typeof navigator==='undefined' || !navigator.mediaDevices) setStatus('Sem contexto seguro. A pagina precisa estar em HTTPS.');
-  else setStatus('Erro ao iniciar: ' + (e.message || e));
+  var n = e && e.name ? e.name : '';
+  if(n==='NotAllowedError')      setStatus('Camera bloqueada. Permita o acesso e recarregue.');
+  else if(n==='NotFoundError')   setStatus('Nenhuma camera encontrada.');
+  else if(n==='NotReadableError')setStatus('Camera em uso por outro app.');
+  else if(typeof navigator==='undefined'||!navigator.mediaDevices) setStatus('Pagina precisa estar em HTTPS.');
+  else setStatus('Erro ao iniciar: '+(e.message||e));
 }
 
 async function iniciarCamera(){
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    throw new Error('getUserMedia indisponivel (pagina precisa estar em HTTPS).');
-  }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia indisponivel (HTTPS).');
   var stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' } });
   video.srcObject = stream;
   return new Promise(function(res){ video.onloadedmetadata=function(){ overlay.width=video.videoWidth; overlay.height=video.videoHeight; res(); }; });
 }
 
-async function carregarRostos(){
-  try{
-    var rostos = await apiGet('getRostos');
-    if(rostos && rostos.length){
-      var labeled = rostos.map(function(r){
-        return new faceapi.LabeledFaceDescriptors(r.label, r.descritores.map(function(d){ return new Float32Array(d); }));
-      });
-      matcher = new faceapi.FaceMatcher(labeled, LIMIAR);
-    }
-  }catch(err){ setStatus('Erro ao carregar banco: ' + err); }
-}
-
 async function detectarRosto(){
   var opt = new faceapi.TinyFaceDetectorOptions({ inputSize:320, scoreThreshold:0.5 });
   return await faceapi.detectSingleFace(video, opt).withFaceLandmarks().withFaceDescriptor();
+}
+
+/* ====== LOGIN (scan continuo ate reconhecer) ====== */
+function alternarScan(){
+  scanAtivo=!scanAtivo;
+  document.getElementById('btnLogin').textContent = scanAtivo ? 'Parar' : 'Procurar meu rosto';
+  if(scanAtivo){ setStatus('Procurando seu rosto...'); loopScan(); }
+  else { clearTimeout(scanId); limparOverlay(); setStatus('Pronto.'); }
+}
+
+async function loopScan(){
+  if(!scanAtivo || entrando) return;
+  var det = await detectarRosto();
+  if(det){
+    desenharCaixa(det,'#1E6B60','analisando...');
+    entrando=true;
+    try{
+      var r = await apiPost({ action:'login', descritor:Array.from(det.descriptor) });
+      if(r.ok){
+        desenharCaixa(det,'#4ade80', r.nome);
+        setStatus('Bem-vindo, '+r.nome+'. Entrando...');
+        scanAtivo=false;
+        window.location.href = URL_API + '?page=painel&token=' + encodeURIComponent(r.token);
+        return;
+      } else {
+        desenharCaixa(det,'#f87171','nao reconhecido');
+        setStatus('Rosto nao reconhecido. Tentando de novo...');
+      }
+    }catch(err){ setStatus('Erro de conexao: '+err); }
+    entrando=false;
+  } else {
+    limparOverlay(); setStatus('Aproxime o rosto da camera...');
+  }
+  scanId=setTimeout(loopScan, INTERVALO_MS);
 }
 
 /* ====== CADASTRAR ====== */
@@ -145,33 +152,9 @@ async function cadastrar(){
   if(!det){ setStatus('Nenhum rosto detectado. Aproxime-se.'); return; }
   try{
     var r = await apiPost({ action:'salvarRosto', nome:nome, descritor:Array.from(det.descriptor) });
-    if(r.ok){ setStatus('Cadastrado: '+r.nome+'. Recarregando banco...'); document.getElementById('nome').value=''; await carregarRostos(); }
+    if(r.ok){ setStatus('Cadastrado: '+r.nome+'. Capture de novo mudando o angulo.'); document.getElementById('nome').value=nome; }
     else setStatus('Falha: '+r.erro);
   }catch(err){ setStatus('Erro: '+err); }
-}
-
-/* ====== RECONHECER ====== */
-function alternarReconhecimento(){
-  loopAtivo=!loopAtivo;
-  document.getElementById('btnRec').textContent = loopAtivo ? 'Parar' : 'Iniciar reconhecimento';
-  if(loopAtivo) loopReconhecer(); else { clearTimeout(loopId); limparOverlay(); }
-}
-async function loopReconhecer(){
-  if(!loopAtivo) return;
-  var det = await detectarRosto(), res = document.getElementById('resultado');
-  if(!det){ res.innerHTML='Nenhum rosto'; res.className='resultado'; limparOverlay(); }
-  else if(!matcher){ res.innerHTML='Sem cadastros<div class="conf">Cadastre rostos primeiro</div>'; res.className='resultado'; desenharCaixa(det,'#1E6B60','rosto detectado'); }
-  else {
-    var m = matcher.findBestMatch(det.descriptor);
-    if(m.label==='unknown'){ res.innerHTML='<span class="no">Desconhecido</span>'; res.className='resultado'; desenharCaixa(det,'#f87171','desconhecido'); }
-    else {
-      var conf = Math.max(0, Math.round((1-m.distance)*100));
-      res.innerHTML='<span class="ok">'+m.label+'</span><div class="conf">confianca '+conf+'% (dist '+m.distance.toFixed(2)+')</div>';
-      res.className='resultado'; desenharCaixa(det,'#4ade80',m.label+' '+conf+'%');
-      if(ultimoLog!==m.label){ ultimoLog=m.label; apiPost({ action:'registrarLog', nome:m.label, distancia:m.distance }).catch(function(){}); }
-    }
-  }
-  loopId=setTimeout(loopReconhecer, INTERVALO_MS);
 }
 
 /* ====== DESENHO / UI ====== */
@@ -182,12 +165,12 @@ function desenharCaixa(det,cor,texto){
 }
 function limparOverlay(){ overlay.getContext('2d').clearRect(0,0,overlay.width,overlay.height); }
 function trocar(modo){
-  var r=modo==='rec';
-  document.getElementById('tabRec').classList.toggle('ativo',r);
-  document.getElementById('tabCad').classList.toggle('ativo',!r);
-  document.getElementById('grupoRec').classList.toggle('ativo',r);
-  document.getElementById('grupoCad').classList.toggle('ativo',!r);
-  if(!r && loopAtivo) alternarReconhecimento();
+  var l=modo==='login';
+  document.getElementById('tabLogin').classList.toggle('ativo',l);
+  document.getElementById('tabCad').classList.toggle('ativo',!l);
+  document.getElementById('grupoLogin').classList.toggle('ativo',l);
+  document.getElementById('grupoCad').classList.toggle('ativo',!l);
+  if(!l && scanAtivo) alternarScan();
 }
 function setStatus(t){ statusEl.textContent=t; }
 </script>
