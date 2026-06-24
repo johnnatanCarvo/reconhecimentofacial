@@ -3,35 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Login Facial CARVO</title>
+<title>Acesso · Câmara Fria Delalê</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/dist/face-api.js"></script>
 <style>
-  :root{--bg:#0C0C0C;--green:#1E6B60;--off:#F2EFE9;--green-soft:rgba(30,107,96,.15);--line:rgba(242,239,233,.12);}
+  :root{--bg:#F5F5F7;--pink:#D24A77;--dark:#1C1C1E;--pink-soft:rgba(210,74,119,.10);--line:#E5E5EA;}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--off);font-family:'DM Sans',sans-serif;min-height:100vh;padding:24px;display:flex;flex-direction:column;align-items:center}
-  h1{font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.5px;margin-bottom:4px}
-  .sub{font-size:13px;opacity:.55;margin-bottom:24px}
-  .tabs{display:flex;gap:8px;margin-bottom:20px;background:rgba(242,239,233,.05);padding:5px;border-radius:12px}
-  .tab{padding:10px 22px;border:none;background:transparent;color:var(--off);font-family:'Manrope';font-weight:700;font-size:14px;border-radius:8px;cursor:pointer;opacity:.55;transition:.2s}
-  .tab.ativo{background:var(--green);opacity:1}
-  .palco{position:relative;width:420px;max-width:100%;aspect-ratio:4/3;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000}
+  body{background:var(--bg);color:var(--dark);font-family:'DM Sans',sans-serif;min-height:100vh;padding:24px;display:flex;flex-direction:column;align-items:center}
+  .marca{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .marca .ic{width:34px;height:34px;border-radius:9px;background:var(--pink);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-family:'Manrope'}
+  h1{font-family:'Manrope';font-weight:800;font-size:20px;letter-spacing:-.4px}
+  .sub{font-size:13px;color:#8E8E93;margin-bottom:22px}
+  .tabs{display:flex;gap:6px;margin-bottom:18px;background:#EBEBED;padding:5px;border-radius:12px}
+  .tab{padding:9px 20px;border:none;background:transparent;color:#555;font-family:'Manrope';font-weight:700;font-size:14px;border-radius:8px;cursor:pointer;transition:.2s}
+  .tab.ativo{background:#fff;color:var(--pink);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+  .palco{position:relative;width:400px;max-width:100%;aspect-ratio:4/3;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#000;box-shadow:0 4px 24px rgba(0,0,0,.08)}
   video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   canvas{z-index:2}
-  .painel{width:420px;max-width:100%;margin-top:18px;display:flex;flex-direction:column;gap:12px}
+  .painel{width:400px;max-width:100%;margin-top:16px;display:flex;flex-direction:column;gap:12px}
   .linha{display:flex;gap:10px}
-  input{flex:1;padding:13px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(242,239,233,.04);color:var(--off);font-family:'DM Sans';font-size:15px}
-  input:focus{outline:none;border-color:var(--green)}
-  button.acao{padding:13px 20px;border:none;border-radius:10px;background:var(--green);color:var(--off);font-family:'Manrope';font-weight:700;font-size:14px;cursor:pointer;transition:.2s}
-  button.acao:hover{filter:brightness(1.15)}
-  button.acao:disabled{opacity:.35;cursor:not-allowed}
-  .status{font-size:13px;text-align:center;min-height:20px;padding:10px;border-radius:10px;background:var(--green-soft);font-weight:500}
+  input{flex:1;padding:13px 14px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--dark);font-family:'DM Sans';font-size:15px}
+  input:focus{outline:none;border-color:var(--pink)}
+  button.acao{padding:13px 20px;border:none;border-radius:12px;background:var(--pink);color:#fff;font-family:'Manrope';font-weight:700;font-size:14px;cursor:pointer;transition:.15s}
+  button.acao:hover{filter:brightness(1.08)}
+  button.acao:disabled{opacity:.4;cursor:not-allowed}
+  .status{font-size:13px;text-align:center;min-height:20px;padding:11px;border-radius:12px;background:var(--pink-soft);color:var(--pink);font-weight:600}
   .grupo{display:none}.grupo.ativo{display:flex;flex-direction:column;gap:12px}
 </style>
 </head>
 <body>
-  <h1>Login Facial CARVO</h1>
-  <div class="sub">Olhe para a camera para entrar</div>
+  <div class="marca"><div class="ic">D</div><h1>Câmara Fria · Delalê</h1></div>
+  <div class="sub">Olhe para a camera para acessar o inventario</div>
 
   <div class="tabs">
     <button class="tab ativo" id="tabLogin" onclick="trocar('login')">Entrar</button>
@@ -53,13 +55,13 @@
         <input id="nome" placeholder="Nome da pessoa" />
         <button class="acao" id="btnCad" disabled onclick="cadastrar()">Capturar rosto</button>
       </div>
-      <div style="font-size:12px;opacity:.5;line-height:1.5">Cadastre cada pessoa 3 a 4 vezes, com angulos e luz diferentes.</div>
+      <div style="font-size:12px;color:#8E8E93;line-height:1.5">Cadastre cada pessoa 3 a 4 vezes, com angulos e luz diferentes.</div>
     </div>
   </div>
 
 <script>
 /* ====== CONFIG ====== */
-var URL_API   = 'https://script.google.com/macros/s/AKfycbyblXQW3FWpG05-th-8WiaoNJNu6wag5ljbamASTr449elzH1x9Xg_vxySyOlrNOHZo/exec';
+var URL_API   = 'COLE_AQUI_A_URL_EXEC_DA_CAMARA_FRIA'; // /exec do Apps Script da Camara Fria
 var MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/model';
 var LIMIAR = 0.5;
 var INTERVALO_MS = 600;
@@ -67,13 +69,11 @@ var INTERVALO_MS = 600;
 var video=document.getElementById('video'), overlay=document.getElementById('overlay'), statusEl=document.getElementById('status');
 var scanAtivo=false, scanId=null, entrando=false;
 
-/* ====== API ====== */
 function apiPost(payload){
   return fetch(URL_API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) })
     .then(function(r){ return r.json(); });
 }
 
-/* ====== BOOT ====== */
 (async function init(){
   try{
     await Promise.all([
@@ -109,7 +109,7 @@ async function detectarRosto(){
   return await faceapi.detectSingleFace(video, opt).withFaceLandmarks().withFaceDescriptor();
 }
 
-/* ====== LOGIN (scan continuo ate reconhecer) ====== */
+/* LOGIN: escaneia ate reconhecer, depois redireciona para a Camara Fria com o token */
 function alternarScan(){
   scanAtivo=!scanAtivo;
   document.getElementById('btnLogin').textContent = scanAtivo ? 'Parar' : 'Procurar meu rosto';
@@ -121,18 +121,18 @@ async function loopScan(){
   if(!scanAtivo || entrando) return;
   var det = await detectarRosto();
   if(det){
-    desenharCaixa(det,'#1E6B60','analisando...');
+    desenharCaixa(det,'#D24A77','analisando...');
     entrando=true;
     try{
       var r = await apiPost({ action:'login', descritor:Array.from(det.descriptor) });
       if(r.ok){
-        desenharCaixa(det,'#4ade80', r.nome);
+        desenharCaixa(det,'#34C759', r.nome);
         setStatus('Bem-vindo, '+r.nome+'. Entrando...');
         scanAtivo=false;
-        window.location.href = URL_API + '?page=painel&token=' + encodeURIComponent(r.token);
+        window.location.href = URL_API + '?token=' + encodeURIComponent(r.token);
         return;
       } else {
-        desenharCaixa(det,'#f87171','nao reconhecido');
+        desenharCaixa(det,'#FF3B30','nao reconhecido');
         setStatus('Rosto nao reconhecido. Tentando de novo...');
       }
     }catch(err){ setStatus('Erro de conexao: '+err); }
@@ -143,7 +143,7 @@ async function loopScan(){
   scanId=setTimeout(loopScan, INTERVALO_MS);
 }
 
-/* ====== CADASTRAR ====== */
+/* CADASTRAR (escreve no banco compartilhado de rostos) */
 async function cadastrar(){
   var nome = document.getElementById('nome').value.trim();
   if(!nome){ setStatus('Digite o nome antes.'); return; }
@@ -157,7 +157,6 @@ async function cadastrar(){
   }catch(err){ setStatus('Erro: '+err); }
 }
 
-/* ====== DESENHO / UI ====== */
 function desenharCaixa(det,cor,texto){
   var ctx=overlay.getContext('2d'); ctx.clearRect(0,0,overlay.width,overlay.height);
   var b=det.detection.box; ctx.strokeStyle=cor; ctx.lineWidth=3; ctx.strokeRect(b.x,b.y,b.width,b.height);
